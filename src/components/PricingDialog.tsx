@@ -1,8 +1,9 @@
+import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Check } from "lucide-react";
-import { toast } from "sonner";
+import { PaymentDialog } from "./PaymentDialog";
 
 interface PricingDialogProps {
   open: boolean;
@@ -30,9 +31,19 @@ const pricingTiers = [
 ];
 
 export const PricingDialog = ({ open, onOpenChange, onPurchase }: PricingDialogProps) => {
-  const handlePurchase = (parcels: number) => {
-    toast.success(`Покупка ${parcels} участков успешно завершена`);
-    onPurchase(parcels);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [selectedParcels, setSelectedParcels] = useState(0);
+  const [selectedPrice, setSelectedPrice] = useState(0);
+
+  const handleSelectPackage = (parcels: number, price: number) => {
+    setSelectedParcels(parcels);
+    setSelectedPrice(price);
+    setPaymentDialogOpen(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    onPurchase(selectedParcels);
+    setPaymentDialogOpen(false);
     onOpenChange(false);
   };
 
@@ -93,7 +104,7 @@ export const PricingDialog = ({ open, onOpenChange, onPurchase }: PricingDialogP
                 </ul>
 
                 <Button
-                  onClick={() => handlePurchase(tier.parcels)}
+                  onClick={() => handleSelectPackage(tier.parcels, tier.price)}
                   className="w-full"
                   variant={tier.popular ? "default" : "outline"}
                 >
@@ -104,6 +115,14 @@ export const PricingDialog = ({ open, onOpenChange, onPurchase }: PricingDialogP
           ))}
         </div>
       </DialogContent>
+
+      <PaymentDialog
+        open={paymentDialogOpen}
+        onOpenChange={setPaymentDialogOpen}
+        onPaymentSuccess={handlePaymentSuccess}
+        amount={selectedPrice}
+        parcels={selectedParcels}
+      />
     </Dialog>
   );
 };

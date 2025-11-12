@@ -26,11 +26,23 @@ export const AuthDialog = ({ open, onOpenChange, onAuthSuccess }: AuthDialogProp
       toast.success("Код отправлен на email");
       setCodeSent(true);
     } else {
-      // Проверка кода
-      toast.success("Вы успешно вошли! Доступен 1 бесплатный участок");
-      onAuthSuccess();
-      onOpenChange(false);
-      setCodeSent(false);
+      // Проверка кода - тестовый аккаунт test@example.com с кодом 1234
+      if (email === "test@example.com" && code === "1234") {
+        toast.success("Вы успешно вошли! Доступен 1 бесплатный участок");
+        onAuthSuccess();
+        onOpenChange(false);
+        setCodeSent(false);
+        setCode("");
+      } else if (code.length === 4) {
+        // Принимаем любой 4-значный код для демонстрации
+        toast.success("Вы успешно вошли! Доступен 1 бесплатный участок");
+        onAuthSuccess();
+        onOpenChange(false);
+        setCodeSent(false);
+        setCode("");
+      } else {
+        toast.error("Неверный код. Попробуйте еще раз");
+      }
     }
   };
 
@@ -42,11 +54,16 @@ export const AuthDialog = ({ open, onOpenChange, onAuthSuccess }: AuthDialogProp
       toast.success("Код отправлен в SMS");
       setCodeSent(true);
     } else {
-      // Проверка кода
-      toast.success("Вы успешно вошли! Доступен 1 бесплатный участок");
-      onAuthSuccess();
-      onOpenChange(false);
-      setCodeSent(false);
+      // Проверка кода - принимаем любой 4-значный код
+      if (code.length === 4) {
+        toast.success("Вы успешно вошли! Доступен 1 бесплатный участок");
+        onAuthSuccess();
+        onOpenChange(false);
+        setCodeSent(false);
+        setCode("");
+      } else {
+        toast.error("Неверный код. Попробуйте еще раз");
+      }
     }
   };
 
@@ -58,6 +75,11 @@ export const AuthDialog = ({ open, onOpenChange, onAuthSuccess }: AuthDialogProp
           <DialogDescription>
             Получите 1 бесплатный участок при регистрации
           </DialogDescription>
+          <div className="bg-info/10 border border-info/20 rounded-lg p-3 mt-2">
+            <p className="text-xs font-medium text-info-foreground">Тестовый аккаунт:</p>
+            <p className="text-xs text-muted-foreground mt-1">Email: test@example.com</p>
+            <p className="text-xs text-muted-foreground">Код: 1234</p>
+          </div>
         </DialogHeader>
 
         <Tabs defaultValue="email" className="w-full">

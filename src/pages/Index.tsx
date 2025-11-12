@@ -8,8 +8,7 @@ import { HistoryPanel } from "@/components/HistoryPanel";
 import { PricingDialog } from "@/components/PricingDialog";
 import { InstructionsSection } from "@/components/InstructionsSection";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, AlertCircle } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 
 interface HistoryItem {
@@ -23,28 +22,34 @@ const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [pricingDialogOpen, setPricingDialogOpen] = useState(false);
-  const [remainingParcels, setRemainingParcels] = useState(0);
+  const [remainingParcels, setRemainingParcels] = useState(1); // 1 бесплатный участок без регистрации
+  const [paidParcels, setPaidParcels] = useState(0); // Участки после покупки (только для авторизованных)
   const [loading, setLoading] = useState(false);
   const [currentCoordinates, setCurrentCoordinates] = useState<number[][] | null>(null);
   const [currentCadastralNumber, setCurrentCadastralNumber] = useState<string | null>(null);
   const [selectedContour, setSelectedContour] = useState(0);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [usedFreeParcel, setUsedFreeParcel] = useState(false);
 
   const handleAuthSuccess = () => {
     setIsAuthenticated(true);
-    setRemainingParcels(1);
+    // При регистрации остается доступ ко всем участкам
   };
 
   const handleSearch = async (cadastralNumber: string) => {
-    if (!isAuthenticated) {
-      toast.error("Войдите в систему для поиска участков");
-      setAuthDialogOpen(true);
-      return;
-    }
-
-    if (remainingParcels <= 0) {
-      toast.error("У вас закончились доступные участки");
-      setPricingDialogOpen(true);
+    // Проверка доступных участков
+    const totalAvailable = remainingParcels + paidParcels;
+    
+    if (totalAvailable <= 0) {
+      if (!isAuthenticated) {
+        // Если не авторизован и использовал бесплатный - требуется регистрация
+        toast.error("Вы использовали бесплатный участок. Зарегистрируйтесь для покупки дополнительных участков");
+        setAuthDialogOpen(true);
+      } else {
+        // Если авторизован - требуется покупка
+        toast.error("У вас закончились доступные участки");
+        setPricingDialogOpen(true);
+      }
       return;
     }
 
@@ -63,7 +68,14 @@ const Index = () => {
 
       setCurrentCoordinates(mockCoordinates);
       setCurrentCadastralNumber(cadastralNumber);
-      setRemainingParcels(prev => prev - 1);
+
+      // Списываем участок: сначала бесплатный, потом платные
+      if (remainingParcels > 0) {
+        setRemainingParcels(remainingParcels - 1);
+        setUsedFreeParcel(true);
+      } else if (paidParcels > 0) {
+        setPaidParcels(paidParcels - 1);
+      }
 
       // Добавляем в историю
       const newHistoryItem: HistoryItem = {
@@ -80,7 +92,7 @@ const Index = () => {
   };
 
   const handlePurchase = (parcels: number) => {
-    setRemainingParcels(prev => prev + parcels);
+    setPaidParcels(prev => prev + parcels);
   };
 
   const handleHistoryItemSelect = (item: HistoryItem) => {
@@ -93,6 +105,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Header
         remainingParcels={remainingParcels}
+        paidParcels={paidParcels}
         onAuthClick={() => setAuthDialogOpen(true)}
         isAuthenticated={isAuthenticated}
       />
@@ -113,18 +126,6 @@ const Index = () => {
             </p>
           </div>
         </div>
-
-        {/* Предупреждение для неавторизованных */}
-        {!isAuthenticated && (
-          <Alert className="max-w-4xl mx-auto mb-8">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Требуется авторизация</AlertTitle>
-            <AlertDescription>
-              Войдите или зарегистрируйтесь, чтобы получить доступ к функциям сервиса. 
-              При регистрации вам будет доступен 1 бесплатный участок.
-            </AlertDescription>
-          </Alert>
-        )}
 
         {/* Основной контент */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -164,6 +165,7 @@ const Index = () => {
         open={authDialogOpen}
         onOpenChange={setAuthDialogOpen}
         onAuthSuccess={handleAuthSuccess}
+        showFreeParcelUsedMessage={usedFreeParcel && !isAuthenticated}
       />
 
       <PricingDialog

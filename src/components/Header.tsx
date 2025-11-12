@@ -4,11 +4,14 @@ import { MapPin, User } from "lucide-react";
 
 interface HeaderProps {
   remainingParcels: number;
+  paidParcels: number;
   onAuthClick: () => void;
   isAuthenticated: boolean;
 }
 
-export const Header = ({ remainingParcels, onAuthClick, isAuthenticated }: HeaderProps) => {
+export const Header = ({ remainingParcels, paidParcels, onAuthClick, isAuthenticated }: HeaderProps) => {
+  const totalParcels = remainingParcels + paidParcels;
+  
   return (
     <header className="border-b bg-card">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -23,14 +26,17 @@ export const Header = ({ remainingParcels, onAuthClick, isAuthenticated }: Heade
         </div>
 
         <div className="flex items-center gap-4">
-          {isAuthenticated && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Доступно участков:</span>
-              <Badge variant="secondary" className="text-base font-semibold">
-                {remainingParcels}
-              </Badge>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Доступно участков:</span>
+            <Badge variant={totalParcels > 0 ? "secondary" : "destructive"} className="text-base font-semibold">
+              {totalParcels}
+            </Badge>
+            {totalParcels > 0 && (
+              <span className="text-xs text-muted-foreground ml-1">
+                ({remainingParcels > 0 ? `${remainingParcels} бесплатный` : ''}{remainingParcels > 0 && paidParcels > 0 ? ' + ' : ''}{paidParcels > 0 ? `${paidParcels} платный` : ''})
+              </span>
+            )}
+          </div>
           <Button variant="outline" size="sm" onClick={onAuthClick}>
             <User className="w-4 h-4 mr-2" />
             {isAuthenticated ? "Профиль" : "Вход"}

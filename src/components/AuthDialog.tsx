@@ -10,9 +10,10 @@ interface AuthDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAuthSuccess: () => void;
+  showFreeParcelUsedMessage?: boolean;
 }
 
-export const AuthDialog = ({ open, onOpenChange, onAuthSuccess }: AuthDialogProps) => {
+export const AuthDialog = ({ open, onOpenChange, onAuthSuccess, showFreeParcelUsedMessage = false }: AuthDialogProps) => {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
@@ -28,14 +29,14 @@ export const AuthDialog = ({ open, onOpenChange, onAuthSuccess }: AuthDialogProp
     } else {
       // Проверка кода - тестовый аккаунт test@example.com с кодом 1234
       if (email === "test@example.com" && code === "1234") {
-        toast.success("Вы успешно вошли! Доступен 1 бесплатный участок");
+        toast.success("Вы успешно вошли! Теперь вы можете покупать дополнительные участки");
         onAuthSuccess();
         onOpenChange(false);
         setCodeSent(false);
         setCode("");
       } else if (code.length === 4) {
         // Принимаем любой 4-значный код для демонстрации
-        toast.success("Вы успешно вошли! Доступен 1 бесплатный участок");
+        toast.success("Вы успешно вошли! Теперь вы можете покупать дополнительные участки");
         onAuthSuccess();
         onOpenChange(false);
         setCodeSent(false);
@@ -56,7 +57,7 @@ export const AuthDialog = ({ open, onOpenChange, onAuthSuccess }: AuthDialogProp
     } else {
       // Проверка кода - принимаем любой 4-значный код
       if (code.length === 4) {
-        toast.success("Вы успешно вошли! Доступен 1 бесплатный участок");
+        toast.success("Вы успешно вошли! Теперь вы можете покупать дополнительные участки");
         onAuthSuccess();
         onOpenChange(false);
         setCodeSent(false);
@@ -73,13 +74,17 @@ export const AuthDialog = ({ open, onOpenChange, onAuthSuccess }: AuthDialogProp
         <DialogHeader>
           <DialogTitle>Вход в ПолеКлик</DialogTitle>
           <DialogDescription>
-            Получите 1 бесплатный участок при регистрации
+            {showFreeParcelUsedMessage 
+              ? "Ваш бесплатный участок использован. Зарегистрируйтесь для покупки дополнительных участков"
+              : "Зарегистрируйтесь для покупки дополнительных участков"}
           </DialogDescription>
-          <div className="bg-info/10 border border-info/20 rounded-lg p-3 mt-2">
-            <p className="text-xs font-medium text-info-foreground">Тестовый аккаунт:</p>
-            <p className="text-xs text-muted-foreground mt-1">Email: test@example.com</p>
-            <p className="text-xs text-muted-foreground">Код: 1234</p>
-          </div>
+          {!showFreeParcelUsedMessage && (
+            <div className="bg-info/10 border border-info/20 rounded-lg p-3 mt-2">
+              <p className="text-xs font-medium text-info-foreground">Тестовый аккаунт:</p>
+              <p className="text-xs text-muted-foreground mt-1">Email: test@example.com</p>
+              <p className="text-xs text-muted-foreground">Код: 1234</p>
+            </div>
+          )}
         </DialogHeader>
 
         <Tabs defaultValue="email" className="w-full">

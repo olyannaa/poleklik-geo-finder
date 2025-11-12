@@ -1,70 +1,56 @@
-import { useEffect, useMemo } from "react";
-import { MapContainer, TileLayer, Polygon, useMap } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
 import { Card } from "@/components/ui/card";
-
-// Fix for default marker icon
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-});
+import { MapPin } from "lucide-react";
 
 interface MapViewProps {
   coordinates: number[][] | null;
   selectedContour: number;
 }
 
-const MapUpdater = ({ coordinates }: { coordinates: number[][] | null }) => {
-  const map = useMap();
-
-  useEffect(() => {
-    if (coordinates && coordinates.length > 0) {
-      const bounds = coordinates.map(coord => [coord[1], coord[0]] as [number, number]);
-      map.fitBounds(bounds, { padding: [50, 50] });
-    }
-  }, [coordinates, map]);
-
-  return null;
-};
-
 export const MapView = ({ coordinates, selectedContour }: MapViewProps) => {
-  // Преобразуем координаты для Leaflet (меняем lat/lng местами)
-  const polygonCoordinates = useMemo(() => {
-    return coordinates
-      ? coordinates.map(coord => [coord[1], coord[0]] as [number, number])
-      : [];
-  }, [coordinates]);
+  // Используем статический API для отображения карты как изображения
+  const centerLat = coordinates && coordinates.length > 0 
+    ? coordinates.reduce((sum, coord) => sum + coord[1], 0) / coordinates.length 
+    : 55.7558;
+  const centerLon = coordinates && coordinates.length > 0 
+    ? coordinates.reduce((sum, coord) => sum + coord[0], 0) / coordinates.length 
+    : 37.6173;
+
+  const mapImageUrl = `https://static-maps.yandex.ru/1.x/?ll=${centerLon},${centerLat}&size=650,450&z=12&l=map&pt=${centerLon},${centerLat},pm2rdm`;
 
   return (
-    <Card className="overflow-hidden h-[600px]">
-      <MapContainer
-        center={[55.7558, 37.6173]}
-        zoom={5}
-        scrollWheelZoom={true}
-        style={{ height: "100%", width: "100%" }}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        />
-        {polygonCoordinates.length > 0 && (
-          <>
-            <Polygon
-              positions={polygonCoordinates}
-              pathOptions={{
-                color: "#22c55e",
-                fillColor: "#22c55e",
-                fillOpacity: 0.3,
-                weight: 2,
-              }}
-            />
-            <MapUpdater coordinates={coordinates} />
-          </>
-        )}
-      </MapContainer>
+    <Card className="overflow-hidden h-[600px] relative">
+      {coordinates && coordinates.length > 0 ? (
+        <div className="w-full h-full relative">
+          <img 
+            src={mapImageUrl}
+            alt="Карта участка" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute top-4 right-4 bg-background/90 backdrop-blur-sm px-3 py-2 rounded-lg border shadow-sm">
+            <div className="flex items-center gap-2 text-sm">
+              <MapPin className="w-4 h-4 text-primary" />
+              <span className="font-medium">Участок найден</span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="w-full h-full flex items-center justify-center bg-muted/30">
+          <div className="text-center space-y-4">
+            <div className="w-full h-full absolute inset-0 opacity-20">
+              <img 
+                src="https://static-maps.yandex.ru/1.x/?ll=37.6173,55.7558&size=650,450&z=5&l=map"
+                alt="Карта России" 
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="relative z-10">
+              <MapPin className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+              <p className="text-lg font-medium text-foreground">Введите кадастровый номер</p>
+              <p className="text-sm text-muted-foreground">Участок отобразится на карте</p>
+            </div>
+          </div>
+        </div>
+      )}
     </Card>
   );
 };
